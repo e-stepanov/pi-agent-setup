@@ -446,7 +446,15 @@ export default function tddExtension(pi: ExtensionAPI): void {
 			return p === state.phase ? ctx.ui.theme.bold(label) : ctx.ui.theme.fg("dim", label);
 		});
 
-		ctx.ui.setWidget("tdd", [phases.join(" -> ")]);
+		const lines: string[] = [phases.join(" -> ")];
+
+		if (state.phase === "implement") {
+			lines.push(
+				ctx.ui.theme.fg("dim", "guard: ") + ctx.ui.theme.fg("muted", validatorModel),
+			);
+		}
+
+		ctx.ui.setWidget("tdd", lines);
 	}
 
 	function setPhase(phase: TddPhase, ctx: ExtensionContext): void {
@@ -658,6 +666,7 @@ export default function tddExtension(pi: ExtensionAPI): void {
 					if (direct) {
 						validatorModel = direct;
 						saveConfig({ ...loadConfig(), model: validatorModel });
+						updateStatus(ctx);
 						ctx.ui.notify(`TDD Guard model set to: ${validatorModel}`, "info");
 						return;
 					}
@@ -681,6 +690,7 @@ export default function tddExtension(pi: ExtensionAPI): void {
 					if (!choice) return;
 					validatorModel = choice;
 					saveConfig({ ...loadConfig(), model: validatorModel });
+					updateStatus(ctx);
 					ctx.ui.notify(`TDD Guard model set to: ${validatorModel}`, "info");
 					break;
 				}
@@ -743,6 +753,7 @@ export default function tddExtension(pi: ExtensionAPI): void {
 						if (!pick) return;
 						validatorModel = pick;
 						saveConfig({ ...loadConfig(), model: validatorModel });
+						updateStatus(ctx);
 						ctx.ui.notify(`TDD Guard model set to: ${validatorModel}`, "info");
 					} else if (choice.includes("Reset")) {
 						resetState(ctx);
