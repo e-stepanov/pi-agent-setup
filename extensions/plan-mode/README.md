@@ -1,65 +1,50 @@
 # Plan Mode Extension
 
-Read-only exploration mode for safe code analysis.
+Minimal plan-mode shim for pi. Stops the model's "exit plan mode?" loop
+without installing the full `@narumitw/pi-plan-mode` package.
 
-## Features
+## What it does
 
-- **Read-only tools**: Restricts available tools to read, bash, grep, find, ls, question
-- **Bash allowlist**: Only read-only bash commands are allowed
-- **Plan extraction**: Extracts numbered steps from `Plan:` sections
-- **Progress tracking**: Widget shows completion status during execution
-- **[DONE:n] markers**: Explicit step completion tracking
-- **Session persistence**: State survives session resume
+1. **Injects a system prompt** telling the model how to "submit" a plan:
+   emit one `<proposed_plan>…</proposed_plan>` block, then **stop**.
+   No `ExitPlanMode` tool exists in pi, so the model is told explicitly
+   not to call one or ask for approval.
+2. **Detects the plan block** on `agent_end` and notifies the user
+   ("Plan ready. Reply 'go' to implement, or send refinements.") instead
+   of letting the model self-loop.
+3. **Strips prior `<proposed_plan>` blocks** from history on `context`
+   so the model never sees its own old plan and re-emits it.
+4. **Hides the raw tags from rendered output** on `message_end` by
+   rewriting the finalized assistant message: the `<proposed_plan>…</proposed_plan>`
+   block is replaced with a clean `## 📋 Proposed Plan` heading followed
+   by the plan body. This affects what pi displays *and* what gets
+   persisted to the session.
 
-## Commands
+## Display
 
-- `/plan` - Toggle plan mode
-- `/todos` - Show current plan progress
-- `Ctrl+Alt+P` - Toggle plan mode (shortcut)
+Because pi's `message_update` events cannot replace streamed content,
+the raw `<proposed_plan>` opening tag may flash briefly during streaming.
+Once the turn finishes (`message_end` fires), the message is rewritten
+in place and the tags disappear from both the TUI and the saved session.
 
-## Usage
+## Command
 
-1. Enable plan mode with `/plan` or `--plan` flag
-2. Ask the agent to analyze code and create a plan
-3. The agent should output a numbered plan under a `Plan:` header:
+| Command | What it does |
+|---|---|
+| `/plan <task>` | Wraps your request with a "PLAN ONLY — read-only, output one `<proposed_plan>` block and stop" preamble and sends it to the model. Reply `go` (or send refinements) afterward. |
 
+Running `/plan` with no argument prints usage.
+
+## Install
+
+Symlinked from this repo into `~/.pi/agent/extensions/plan-mode`. pi
+loads extension directories via their `index.ts` entry point (same shape
+as the `tdd` extension).
+
+```sh
+ln -s "$PWD/extensions/plan-mode" ~/.pi/agent/extensions/plan-mode
 ```
-Plan:
-1. First step description
-2. Second step description
-3. Third step description
-```
 
-4. Choose "Execute the plan" when prompted
-5. During execution, the agent marks steps complete with `[DONE:n]` tags
-6. Progress widget shows completion status
+## Files
 
-## How It Works
-
-### Plan Mode (Read-Only)
-- Only read-only tools available
-- Bash commands filtered through allowlist
-- Agent creates a plan without making changes
-
-### Execution Mode
-- Full tool access restored
-- Agent executes steps in order
-- `[DONE:n]` markers track completion
-- Widget shows progress
-
-### Command Allowlist
-
-Safe commands (allowed):
-- File inspection: `cat`, `head`, `tail`, `less`, `more`
-- Search: `grep`, `find`, `rg`, `fd`
-- Directory: `ls`, `pwd`, `tree`
-- Git read: `git status`, `git log`, `git diff`, `git branch`
-- Package info: `npm list`, `npm outdated`, `yarn info`
-- System info: `uname`, `whoami`, `date`, `uptime`
-
-Blocked commands:
-- File modification: `rm`, `mv`, `cp`, `mkdir`, `touch`
-- Git write: `git add`, `git commit`, `git push`
-- Package install: `npm install`, `yarn add`, `pip install`
-- System: `sudo`, `kill`, `reboot`
-- Editors: `vim`, `nano`, `code`
+- `index.ts` — extension entry point (command + hooks)
