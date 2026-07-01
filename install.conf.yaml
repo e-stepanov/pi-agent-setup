@@ -1,0 +1,24 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+      glob: true
+
+- create:
+    - ~/.pi/agent/extensions
+    - ~/.agents/skills
+    - ~/.claude/skills
+
+- link:
+    ~/.pi/agent/extensions/:
+      glob: true
+      path: pi/extensions/*
+    ~/.agents/skills/:
+      glob: true
+      path: skills/*
+    ~/.claude/skills/:
+      glob: true
+      path: skills/*
+
+- shell:
+    - [git submodule update --init --recursive, Installing/updating dotbot submodule]
