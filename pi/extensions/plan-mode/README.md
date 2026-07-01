@@ -39,7 +39,7 @@ Running `/plan` with no argument prints usage.
 
 Symlinked from this repo into `~/.pi/agent/extensions/plan-mode`. pi
 loads extension directories via their `index.ts` entry point (same shape
-as the `tdd` extension).
+as the `notify` extension).
 
 ```sh
 ln -s "$PWD/extensions/plan-mode" ~/.pi/agent/extensions/plan-mode

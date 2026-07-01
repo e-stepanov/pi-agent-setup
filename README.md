@@ -4,7 +4,7 @@ Shared pi extensions and agent skills, installed via [dotbot](https://github.com
 
 ## Contents
 
-- `pi/extensions/` — pi agent extensions (`notify.ts`, `plan-mode/`, `tdd/`)
+- `pi/extensions/` — pi agent extensions (`notify.ts`, `plan-mode/`)
 - `skills/` — agent skills (`tdd/`), shared by both pi and Claude Code
 
 ## Installation
