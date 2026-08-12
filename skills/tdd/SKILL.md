@@ -47,13 +47,14 @@ When this skill is loaded:
 When approaching a new feature increment:
 
 1. Write a simple failing test for a small part of the feature.
-2. Implement the bare minimum to make it pass — even if it meaningless for business logic and future tests.
-3. Run tests to confirm they pass (Green).
-4. Make any necessary refactoring.
-5. Run tests again to confirm they still pass (Green).
-6. Show the diff for the current test implementation.
-7. **Stop.** When the user says `go`, mark the current test as completed in `plan.md` and add/select the next small increment.
-8. Repeat until the feature is complete.
+2. Implement the bare minimum to make it pass. Bias to "Fake It": return a literal, hardcode a constant, plumb the asserted value directly. Do NOT write code the current test does not assert, even if it is obviously needed next.
+3. Before showing anything, print a Minimality Ledger: one row per non-trivial line of implementation, each citing the exact assertion that forces it. Any row you cannot map to an assertion in the CURRENT test: delete that line, then recheck the ledger.
+4. Run tests to confirm they pass (Green).
+5. Make any necessary refactoring.
+6. Run tests again to confirm they still pass (Green).
+7. Show the Minimality Ledger, then the diff for the current test implementation.
+8. **Stop.** When the user says `go`, mark the current test as completed in `plan.md` and add/select the next small increment.
+9. Repeat until the feature is complete.
 
 Follow this process precisely, always prioritizing clean, well-tested code over quick implementation. Always write one test at a time, make it run, then improve the structure.
 
@@ -66,3 +67,12 @@ Follow this process precisely, always prioritizing clean, well-tested code over 
 - No new files unless the test cannot pass otherwise. No helper modules, no utils dumping ground.
 - No unused parameters, hooks, or extension points.
 - If you believe flexibility or extra handling is genuinely needed, STOP and ask — do not add it on your own judgment.
+- Traceability rule: every element of the implementation must cite a specific assertion in the current test. No citation → delete it. This is not optional and is not internal; you must emit the ledger before the diff.
+- Do not pattern-match on neighboring production code. Reference files (e.g. a sibling method) show the DESTINATION, not the current step. Copying their shape is the #1 cause of over-implementation.
+- Prefer Fake It over Obvious Implementation. Return `None`, `0`, `""`, or the literal the assertion expects until a later test triangulates and forces generalization.
+
+### Minimal vs. not (example)
+
+Test asserts only: `request.method == "post"`.
+- NOT minimal: build the full Request with real endpoint, headers, json, and return an OzonFreshResponse (endpoint/headers/json/return are unasserted → forbidden).
+- Minimal: issue a post with placeholder/empty fields; return nothing. Later tests add endpoint, body, and return value one assertion at a time.
